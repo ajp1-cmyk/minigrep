@@ -1,5 +1,6 @@
 use std::fs;
 use std::error::Error;
+use colored::Colorize;
 
 pub struct Config {
     query: String,
@@ -33,11 +34,51 @@ impl Config{
 
 
 pub fn run(config:&Config) -> Result<(),Box<dyn Error>>{
-    println!("Search for: {}",config.query());
-    println!("In File: {}",config.filename());
+    println!("\nSearch for: {}",config.query().bright_yellow());
+    println!("In File: {}\n",config.filename().bright_red());
 
     let contents = fs::read_to_string(config.filename())?;
-    println!("\n\nWith text:\n{}",contents);
+
+    
+    for line in search(config.query(), &contents){
+    
+        for word in line.replace("\n", " \n").split(" "){
+            if word.contains(config.query()){
+                print!("{} ",word.blue().italic().bold());
+            }else {
+                print!("{} ",word);
+            }
+        }
+        println!("");
+    }
+
     Ok(())
 }
 
+pub fn search<'a>(query:&str, contents:&'a str)-> Vec<&'a str>{
+    
+    let mut results = Vec::new();
+
+    for line in contents.lines(){
+        if line.contains(query){
+            results.push(line);
+        }
+    }
+    results
+}
+
+#[cfg(test)]
+mod test{
+    use super::*;
+
+    #[test]
+    fn one_result(){
+        let query = "duct";
+          let contents = "\
+            Rust:
+safe, fast, productive.
+Pick three.";
+            println!("{}",contents);
+        assert_eq!(vec!["safe, fast, productive."], search(query,contents));
+    }
+}
